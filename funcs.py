@@ -18,3 +18,7 @@ def initial_profile(x, x10, x20, r0, N):
         init_cond[i] = (1 - np.tanh(C1/(r0**2) - 1))
         
     return 0.5*init_cond
+
+def get_speed(x, y):
+
+    return -2*np.pi*y, 2*np.pi*x
