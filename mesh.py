@@ -206,3 +206,54 @@ def plot_mesh(
     ax.set_title("Triangular mesh")
 
     return ax
+
+
+def xdmf_to_pet(filename):
+    """
+    Read a triangular 2-D mesh from any meshio-supported file
+    (.xdmf, .msh, .vtk, ...) and return Larson-Bengzon style arrays.
+
+    Parameters
+    ----------
+    filename : str or Path
+        Path to a meshio-readable mesh file.
+
+    Returns
+    -------
+    p : numpy.ndarray, shape (2, N_p)
+        Node coordinates.
+    e : numpy.ndarray, shape (2, N_e)
+        Boundary-edge connectivity (edges shared by exactly one triangle).
+    t : numpy.ndarray, shape (3, N_t)
+        Triangle connectivity, counterclockwise orientation.
+    """
+    import meshio
+
+    msh = meshio.read(str(filename))
+
+    # Node coordinates -- drop z if present
+    p = msh.points[:, :2].T.copy()               # (2, N_p)
+
+    # Triangle connectivity
+    t = msh.cells_dict["triangle"].astype(np.int32).T.copy()  # (3, N_t)
+
+    # Ensure counterclockwise orientation
+    x, y = p
+    for K in range(t.shape[1]):
+        i, j, k = t[:, K]
+        area = 0.5 * ((x[j] - x[i]) * (y[k] - y[i])
+                      - (x[k] - x[i]) * (y[j] - y[i]))
+        if area < 0.0:
+            t[1, K], t[2, K] = t[2, K], t[1, K]
+
+    # Boundary edges = edges shared by exactly one triangle
+    edge_count = {}
+    for K in range(t.shape[1]):
+        for a, b in ((0, 1), (1, 2), (2, 0)):
+            edge = (min(t[a, K], t[b, K]), max(t[a, K], t[b, K]))
+            edge_count[edge] = edge_count.get(edge, 0) + 1
+
+    bnd_edges = [edge for edge, cnt in edge_count.items() if cnt == 1]
+    e = np.array(bnd_edges, dtype=np.int32).T    # (2, N_e)
+
+    return p, e, t
