@@ -19,6 +19,15 @@ def initial_profile(x, x10, x20, r0, N):
         
     return 0.5*init_cond
 
+def exact_solution(x1, x2, x10, x20, r0):
+
+    C1 = (x1 - x10)**2 + (x2 - x20)**2
+
+    init_cond = (1 - np.tanh(C1/(r0**2) - 1))
+        
+    return 0.5*init_cond
+
 def get_speed(x, y):
 
     return -2*np.pi*y, 2*np.pi*x
+

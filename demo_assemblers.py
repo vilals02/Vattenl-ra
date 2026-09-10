@@ -90,6 +90,33 @@ U_n = U0
 for n in range(n_iterations):
     U_n = f.forward_euler_step(M_inv, C, U_n, k)
 
+
+errors = np.zeros(len(p))
+
+elapsed_time = k*n_iterations
+
+#Calculate error vector
+for n in range(len(p)):
+
+    x1_c = p[0, n]
+    x2_c = p[1, n] 
+
+    x10 = x1_c - elapsed_time*f.get_speed(x1_c, x2_c)[0]
+    x20 = x2_c - elapsed_time*f.get_speed(x1_c, x2_c)[1]
+
+    u = f.exact_solution(x10, x20,x0, y0, r0)
+
+    errors[n] = np.linalg.norm(u - U_n[n], 2)
+
+#Compute norm of eh
+
+eh = np.sqrt(errors.T@M@errors)
+
+print(f"Error: {eh}")
+
+
+
+
 fig = plt.figure(figsize=(8, 6))
 ax = fig.add_subplot(111, projection="3d")
 surf = ax.plot_trisurf(tri, U_n, cmap="viridis", edgecolor="none")
