@@ -74,11 +74,11 @@ from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
 
 one = np.ones(p.shape[1])
 
-max_time = 0.1 # seconds
+max_time = 1 # seconds
 r0 = 0.25
 x0 = 0.3
 y0 = 0
-k = 0.00064
+k = 0.00004 # timestep for finest mesh, h = 0.02 
 n_iterations = int(np.ceil(max_time / k))
 
 exact_x = p[0]
@@ -92,8 +92,10 @@ triangles = triangles.astype(int)
 tri = mtri.Triangulation(p[0], p[1], triangles)
 
 U_n = U0
+total_mass = np.zeros(n_iterations)
 for n in range(n_iterations):
     U_n = f.rk4_step(M_inv, C, U_n, k)
+    total_mass[n] = np.sum(U_n)
 
 
 errors = np.zeros(len(p[1]))
@@ -130,7 +132,16 @@ ax.set_ylabel("y")
 ax.set_zlabel("U")
 ax.set_title(f"Solution after {max_time} seconds, k={k}")
 fig.colorbar(surf, shrink=0.6)
-plt.show()
+
+fig.savefig(f"plots/sol-plot_{len(p[1])}")
+
+fig1, ax1 = plt.subplots(figsize=(8, 6))
+ax1.plot(np.linspace(0, 1, n_iterations), total_mass, label="total mass")
+ax1.set_xlabel("time [s]")
+ax1.set_ylabel("total mass")
+ax1.set_title("Total mass as a function of time")
+
+fig1.savefig(f"plots/mass-plot_{len(p[1])}")
 
 
 
