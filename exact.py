@@ -43,7 +43,7 @@ C = convection_assembler_2d(p, t, bx, by)
 
 one = np.ones(p.shape[1])
 
-max_time = 1
+max_time = 0.9
 n_timesteps = 100
 dt = max_time / n_timesteps
 

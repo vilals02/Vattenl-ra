@@ -3,10 +3,22 @@ import numpy as np
 
 def forward_euler_step(M_inv, C, U_n, h):
 
-    f = M_inv @ C @ U_n
-    U_next = U_n - h*f
+    f = -1 * M_inv @ C @ U_n
+    U_next = U_n + h*f
 
     return U_next
+
+def rk4_step(M_inv, C, U_n, h):
+
+    f = -1 * M_inv @ C 
+    k1 = f @ U_n
+    k2 = f @ (U_n + k1 * h * 0.5)
+    k3 = f @ (U_n + k2 * h * 0.5)
+    k4 = f @ (U_n + k3 * h)
+
+    U_next = U_n +  (h / 6) * (k1 + 2 * k2 + 2 * k3 + k4)
+
+    return U_next 
 
 def initial_profile(x, x10, x20, r0, N):
     init_cond = np.zeros(N)

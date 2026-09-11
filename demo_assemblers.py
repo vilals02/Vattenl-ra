@@ -21,7 +21,7 @@ import matplotlib.colors as mcolors
 #make mesh centered around origo
 # ── Read mesh ──────────────────────────────────────────────────────────────────
 
-p, e, t = xdmf_to_pet("circle.xdmf")
+p, e, t = xdmf_to_pet("unit_circle.xdmf")
 x, y    = p[0], p[1]
 n_dofs  = p.shape[1]
 
@@ -39,6 +39,10 @@ b = load_assembler_2d(p, t, lambda x, y: 1.0)
 bx = np.ones(p.shape[1])
 by = 2.0 * np.ones(p.shape[1])
 C = convection_assembler_2d(p, t, bx, by)
+
+print("M shape: ", M.shape)
+print("C shape: ", C.shape)
+print("Num points shape: ", p.shape)
 
 # ── Boundary conditions ────────────────────────────────────────────────────────
 #
@@ -70,10 +74,12 @@ from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
 
 one = np.ones(p.shape[1])
 
+max_time = 0.1 # seconds
 r0 = 0.25
 x0 = 0.3
 y0 = 0
-k = 0.0001
+k = 0.00064
+n_iterations = int(np.ceil(max_time / k))
 
 exact_x = p[0]
 
@@ -85,18 +91,17 @@ triangles = t.T if t.shape[0] == 3 else t
 triangles = triangles.astype(int)
 tri = mtri.Triangulation(p[0], p[1], triangles)
 
-n_iterations = 5000
 U_n = U0
 for n in range(n_iterations):
-    U_n = f.forward_euler_step(M_inv, C, U_n, k)
+    U_n = f.rk4_step(M_inv, C, U_n, k)
 
 
-errors = np.zeros(len(p))
+errors = np.zeros(len(p[1]))
 
 elapsed_time = k*n_iterations
 
 #Calculate error vector
-for n in range(len(p)):
+for n in range(len(p[1])):
 
     x1_c = p[0, n]
     x2_c = p[1, n] 
@@ -106,7 +111,7 @@ for n in range(len(p)):
 
     u = f.exact_solution(x10, x20,x0, y0, r0)
 
-    errors[n] = np.linalg.norm(u - U_n[n], 2)
+    errors[n] = u - U_n[n]  
 
 #Compute norm of eh
 
@@ -123,7 +128,7 @@ surf = ax.plot_trisurf(tri, U_n, cmap="viridis", edgecolor="none")
 ax.set_xlabel("x")
 ax.set_ylabel("y")
 ax.set_zlabel("U")
-ax.set_title(f"Solution after {n_iterations} steps, k={k}")
+ax.set_title(f"Solution after {max_time} seconds, k={k}")
 fig.colorbar(surf, shrink=0.6)
 plt.show()
 
@@ -132,11 +137,9 @@ plt.show()
 print("1^T M 1           =", one @ (M @ one))
 print("sum(b), f=1       =", np.sum(b))
 print("||M1-b||_inf      =", np.linalg.norm(M @ one - b, np.inf))
-print("||A1||_inf        =", np.linalg.norm(A @ one, np.inf))
 print("||C1||_inf        =", np.linalg.norm(C @ one, np.inf))
 
 print("M:", M.shape, "nnz =", M.nnz)
-print("A:", A.shape, "nnz =", A.nnz)
 print("C:", C.shape, "nnz =", C.nnz)
 
 print("Point", p.shape)
