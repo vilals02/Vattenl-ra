@@ -74,7 +74,7 @@ from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
 
 one = np.ones(p.shape[1])
 
-max_time = 0.2 # seconds
+max_time = 1 # seconds
 r0 = 0.25
 x0 = 0.3
 y0 = 0
@@ -84,7 +84,7 @@ n_iterations = int(np.ceil(max_time / k))
 exact_x = p[0]
 
 M_inv = sparse_inv(M)
-U0 = f.initial_profile_A(p, x0, y0, r0, len(p[1]))
+U0 = f.initial_profile_B(p, x0, y0, r0, len(p[1]))
 
 # build the triangulation once, from your mesh connectivity
 triangles = t.T if t.shape[0] == 3 else t
