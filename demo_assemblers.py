@@ -35,13 +35,17 @@ print(f"Bnd edges : {e.shape[1]}")
 
 M = mass_assembler_2d(p, t)
 b = load_assembler_2d(p, t, lambda x, y: 1.0)
+S = stiffness_assembler_2d(p, t)
 
 bx = np.ones(p.shape[1])
 by = 2.0 * np.ones(p.shape[1])
 C = convection_assembler_2d(p, t, bx, by)
 
+A = S + C
+
 print("M shape: ", M.shape)
 print("C shape: ", C.shape)
+print("A shape: ", A.shape)
 print("Num points shape: ", p.shape)
 
 # ── Boundary conditions ────────────────────────────────────────────────────────
@@ -84,7 +88,7 @@ n_iterations = int(np.ceil(max_time / k))
 exact_x = p[0]
 
 M_inv = sparse_inv(M)
-U0 = f.initial_profile_B(p, x0, y0, r0, len(p[1]))
+U0 = f.initial_profile_A(p, x0, y0, r0, len(p[1]))
 
 # build the triangulation once, from your mesh connectivity
 triangles = t.T if t.shape[0] == 3 else t
@@ -94,7 +98,7 @@ tri = mtri.Triangulation(p[0], p[1], triangles)
 U_n = U0
 total_mass = np.zeros(n_iterations)
 for n in range(n_iterations):
-    U_n = f.rk4_step(M_inv, C, U_n, k)
+    U_n = f.rk4_step(M_inv, A, U_n, k)
     total_mass[n] = np.sum(U_n)
 
 
@@ -133,7 +137,7 @@ ax.set_zlabel("U")
 ax.set_title(f"Solution after {max_time} seconds, k={k}")
 fig.colorbar(surf, shrink=0.6)
 
-fig.savefig(f"plots_B/sol-plot_{len(p[1])}")
+fig.savefig(f"plots_stabilization/sol-plot_{len(p[1])}")
 
 fig1, ax1 = plt.subplots(figsize=(8, 6))
 ax1.plot(np.linspace(0, 1, n_iterations), total_mass, label="total mass")
@@ -141,7 +145,7 @@ ax1.set_xlabel("time [s]")
 ax1.set_ylabel("total mass")
 ax1.set_title("Total mass as a function of time")
 
-fig1.savefig(f"plots_B/mass-plot_{len(p[1])}")
+fig1.savefig(f"plots_stabilization/mass-plot_{len(p[1])}")
 
 
 
@@ -152,5 +156,9 @@ print("||C1||_inf        =", np.linalg.norm(C @ one, np.inf))
 
 print("M:", M.shape, "nnz =", M.nnz)
 print("C:", C.shape, "nnz =", C.nnz)
+print("triangles: ", t.shape)
+print("First triangle: ", t[:,0])
+print("Max index: ", np.max(t.reshape(-1)))
+print("Edges: ", e.shape)
 
 print("Point", p.shape)

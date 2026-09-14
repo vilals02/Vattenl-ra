@@ -1,16 +1,18 @@
 import numpy as np
 
 
-def forward_euler_step(M_inv, C, U_n, h):
+def forward_euler_step(M_inv, A, U_n, h):
 
-    f = -1 * M_inv @ C @ U_n
+    f = -1 * M_inv @ A @ U_n
     U_next = U_n + h*f
 
     return U_next
 
-def rk4_step(M_inv, C, U_n, h):
+def rk4_step(M_inv, A, U_n, h):
 
-    f = -1 * M_inv @ C 
+    
+    f = -1 * M_inv @ A
+
     k1 = f @ U_n
     k2 = f @ (U_n + k1 * h * 0.5)
     k3 = f @ (U_n + k2 * h * 0.5)
