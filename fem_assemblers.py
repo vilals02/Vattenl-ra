@@ -1,7 +1,5 @@
-
 import numpy as np
 from scipy.sparse import coo_matrix
-
 
 def hat_gradients(x, y):
     x = np.asarray(x, dtype=float)
@@ -114,7 +112,6 @@ def stiffness_assembler_2d(p, t, a=lambda x, y: 1.0):
         y = p[1, loc2glb]
 
         area, b, c = hat_gradients(x, y)
-
         xc = np.mean(x)
         yc = np.mean(y)
         abar = float(a(xc, yc))

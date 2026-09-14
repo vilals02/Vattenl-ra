@@ -4,6 +4,9 @@ from dolfinx import mesh
 from scipy.sparse.linalg import spsolve, inv as sparse_inv
 import matplotlib.pyplot as plt
 
+import matplotlib.tri as mtri
+from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
+
 from mesh import dolfinx_to_pet, plot_mesh
 from fem_assemblers import (
     mass_assembler_2d,
@@ -29,9 +32,10 @@ msh = mesh.create_rectangle(
 
 p, e, t = dolfinx_to_pet(msh)
 
-#plottten = plot_mesh(p,e,t)
-
-#plt.show()
+# build the triangulation once, from your mesh connectivity
+triangles = t.T if t.shape[0] == 3 else t
+triangles = triangles.astype(int)
+tri = mtri.Triangulation(p[0], p[1], triangles)
 
 M = mass_assembler_2d(p, t)
 b = load_assembler_2d(p, t, lambda x, y: 1.0)
@@ -43,78 +47,26 @@ C = convection_assembler_2d(p, t, bx, by)
 
 one = np.ones(p.shape[1])
 
-max_time = 0.9
-n_timesteps = 100
-dt = max_time / n_timesteps
+time = 0.9
 
-N = p.shape[1]
-path_matrix_x = np.zeros((N, n_timesteps + 1))
-path_matrix_y = np.zeros((N, n_timesteps + 1))
-
-# work on a copy so the original mesh points p are untouched
-p_track = p.copy()
-path_matrix_x[:, 0] = p_track[0]
-path_matrix_y[:, 0] = p_track[1]
 
 r0 = 0.25
 x0 = 0.3
 y0 = 0
 
-U0 = f.initial_profile(p, x0, y0, r0, len(p[1]))
+U_n = np.zeros(p.shape[1])
+for i in range(len(p[1])):
+    x1 = p[0, i]*np.cos(2*np.pi*time) - p[1, i]*np.sin(2*np.pi*time)
+    x2 = p[0, i]*np.sin(2*np.pi*time) + p[1, i]*np.cos(2*np.pi*time)
+    U_n[i] = f.exact_solution(x1, x2, x0, y0, r0)
 
-for j in range(n_timesteps):
-    for i in range(N):
-        x = p_track[0, i]
-        y = p_track[1, i]
-
-        vx, vy = f.get_speed(x, y)
-
-        nx = x + dt * vx
-        ny = y + dt * vy
-
-        p_track[0, i] = nx
-        p_track[1, i] = ny
-
-        path_matrix_x[i, j + 1] = nx
-        path_matrix_y[i, j + 1] = ny
-
-# --- plot the particle paths ---
-fig = plt.figure(figsize=(8, 7))
+fig = plt.figure(figsize=(8, 6))
 ax = fig.add_subplot(111, projection="3d")
-
-# color each path by its initial U0 value, for visual reference
-norm = mcolors.Normalize(vmin=U0.min(), vmax=U0.max())
-cmap = cm.viridis
-
-for i in range(N):
-    z_i = np.full(n_timesteps + 1, U0[i])  # constant height = U0[i]
-    ax.plot(
-        path_matrix_x[i, :],
-        path_matrix_y[i, :],
-        z_i,
-        color=cmap(norm(U0[i])),
-        linewidth=0.8,
-    )
-
-# mark starting points
-ax.scatter(
-    path_matrix_x[:, 0],
-    path_matrix_y[:, 0],
-    U0,
-    c=U0,
-    cmap=cmap,
-    s=15,
-    zorder=5,
-    label="start",
-)
-
+surf = ax.plot_trisurf(tri, U_n, cmap="viridis", edgecolor="none")
 ax.set_xlabel("x")
 ax.set_ylabel("y")
-ax.set_zlabel("U0[i]")
-ax.set_title(f"Particle paths lifted to initial U0 value ({n_timesteps} steps, dt={dt:.4f})")
+ax.set_zlabel("U")
+ax.set_title(f"Solution after {time} seconds, k={k}")
+fig.colorbar(surf, shrink=0.6)
 
-mappable = cm.ScalarMappable(norm=norm, cmap=cmap)
-mappable.set_array(U0)
-fig.colorbar(mappable, ax=ax, shrink=0.6, label="U0")
-
-plt.show()
+fig.savefig(f"plots_Exact/sol-plot_{len(p[1])}")
