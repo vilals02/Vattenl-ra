@@ -66,7 +66,7 @@ surf = ax.plot_trisurf(tri, U_n, cmap="viridis", edgecolor="none")
 ax.set_xlabel("x")
 ax.set_ylabel("y")
 ax.set_zlabel("U")
-ax.set_title(f"Solution after {time} seconds, k={k}")
+ax.set_title(f"Solution after {time} seconds")
 fig.colorbar(surf, shrink=0.6)
 
 fig.savefig(f"plots_Exact/sol-plot_{len(p[1])}")
