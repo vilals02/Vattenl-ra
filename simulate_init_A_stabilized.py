@@ -110,7 +110,7 @@ elapsed_time = k*n_iterations
 for n in range(len(p[1])):
     x1 = p[0, i]*np.cos(2*np.pi*max_time) - p[1, i]*np.sin(2*np.pi*max_time)
     x2 = p[0, i]*np.sin(2*np.pi*max_time) + p[1, i]*np.cos(2*np.pi*max_time)
-    u = f.exact_solution(x1, x2, x0, y0, r0)
+    u = f.exact_solution_A(x1, x2, x0, y0, r0)
 
     errors[n] = u - U_n[n]  
 

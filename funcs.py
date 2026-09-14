@@ -33,7 +33,8 @@ def initial_profile_A(x, x10, x20, r0, N):
         
     return 0.5*init_cond
 
-def initial_profile_B(x, x10, x20, r0squared, N):
+def initial_profile_B(x, x10, x20, r0, N):
+    r0squared = r0 ** 2
     init_cond = np.zeros(N)
     for i in range(N):
         x1 = x[0, i]
@@ -46,11 +47,22 @@ def initial_profile_B(x, x10, x20, r0squared, N):
         
     return init_cond
 
-def exact_solution(x1, x2, x10, x20, r0):
+def exact_solution_A(x1, x2, x10, x20, r0):
 
     C1 = (x1 - x10)**2 + (x2 - x20)**2
 
     init_cond = (1 - np.tanh(C1/(r0**2) - 1))
+        
+    return 0.5*init_cond
+
+def exact_solution_B(x1, x2, x10, x20, r0):
+    r0squared = r0 ** 2
+    C1 = (x1 - x10)**2 + (x2 - x20)**2
+
+    if C1 <= r0squared:
+        init_cond = 1
+    else:
+        init_cond = 0
         
     return 0.5*init_cond
 
