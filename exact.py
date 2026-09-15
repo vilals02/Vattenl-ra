@@ -21,12 +21,16 @@ from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
 import matplotlib.cm as cm
 import matplotlib.colors as mcolors
 
+# toggle initial condition
+initial_A = True
+init_cond = 'A' if initial_A else 'B'
+
 #make mesh centered around origo
 
 msh = mesh.create_rectangle(
     MPI.COMM_SELF,
     points=[[-0.5, -0.5], [0.5, 0.5]],
-    n=[10, 10],
+    n=[50, 50],
     cell_type=mesh.CellType.triangle,
 )
 
@@ -47,26 +51,33 @@ C = convection_assembler_2d(p, t, bx, by)
 
 one = np.ones(p.shape[1])
 
-time = 0.9
+time = 1
 
 
 r0 = 0.25
 x0 = 0.3
 y0 = 0
 
+X = np.zeros(p.shape)
 U_n = np.zeros(p.shape[1])
 for i in range(len(p[1])):
     x1 = p[0, i]*np.cos(2*np.pi*time) - p[1, i]*np.sin(2*np.pi*time)
     x2 = p[0, i]*np.sin(2*np.pi*time) + p[1, i]*np.cos(2*np.pi*time)
-    U_n[i] = f.exact_solution(x1, x2, x0, y0, r0)
+    X[0, i], X[1, i] = x1, x2
+    if initial_A:
+        U_n[i] = f.exact_solution_A(x1, x2, x0, y0, r0)
+    else: 
+        U_n[i] = f.exact_solution_B(x1, x2, x0, y0, r0)
+
+new_tri = mtri.Triangulation(X[0], X[1], triangles)
 
 fig = plt.figure(figsize=(8, 6))
 ax = fig.add_subplot(111, projection="3d")
-surf = ax.plot_trisurf(tri, U_n, cmap="viridis", edgecolor="none")
+surf = ax.plot_trisurf(new_tri, U_n, cmap="viridis", edgecolor="none")
 ax.set_xlabel("x")
 ax.set_ylabel("y")
 ax.set_zlabel("U")
 ax.set_title(f"Solution after {time} seconds")
 fig.colorbar(surf, shrink=0.6)
 
-fig.savefig(f"plots_Exact/sol-plot_{len(p[1])}")
+fig.savefig(f"plots_Exact/sol_{init_cond}")
