@@ -132,7 +132,7 @@ ax.set_zlabel("U")
 ax.set_title(f"Solution after {max_time} seconds, k={k}")
 fig.colorbar(surf, shrink=0.6)
 
-fig.savefig(f"plots_AS/sol-plot_{len(p[1])}")
+fig.savefig(f"plots_As/sol-plot_{len(p[1])}")
 
 fig1, ax1 = plt.subplots(figsize=(8, 6))
 ax1.plot(np.linspace(0, 1, n_iterations), total_mass, label="total mass")
@@ -140,7 +140,7 @@ ax1.set_xlabel("time [s]")
 ax1.set_ylabel("total mass")
 ax1.set_title("Total mass as a function of time")
 
-fig1.savefig(f"plots_AS/mass-plot_{len(p[1])}")
+fig1.savefig(f"plots_As/mass-plot_{len(p[1])}")
 
 
 

@@ -1,9 +1,9 @@
 import matplotlib.pyplot as plt
 
 errorsA = [0.348, 0.345, 0.342, 0.340]
-errorsB = []
-errorsAS = []
-errorsBS = []
+errorsB = [0.433, 0.422, 0.417, 0.422]
+errorsAS = [0.000215, 0.000972, 0.00175, 0.00242]
+errorsBS = [0.000167, 0.000764, 0.00157, 0.00205]
 mesh_size = [0.05, 0.08, 0.10, 0.12]
 
 
