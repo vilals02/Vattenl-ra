@@ -20,7 +20,7 @@ import matplotlib.colors as mcolors
 
 # toggles 
 euler = False
-initial_A = True
+integration = 'Euler' if euler else 'RK4'
 
 #make mesh centered around origo
 # ── Read mesh ──────────────────────────────────────────────────────────────────
@@ -90,7 +90,7 @@ max_time = 0.2 # seconds
 r0 = 0.25
 x0 = 0.3
 y0 = 0
-CFL = 40
+CFL = 36
 h = 0.08 # the same as the one in unit_circle.geo
 k = CFL * h / np.linalg.norm(beta, np.inf)  # timestep according to CFL condition, play around with what CFL should be
 n_iterations = int(np.ceil(max_time / k))
@@ -113,6 +113,7 @@ for n in range(n_iterations):
     else:
         U_n = f.rk4_step(M_inv, C, U_n, k)
     total_mass[n] = np.sum(U_n)
+total_mass = total_mass / np.max(total_mass)
 
 
 errors = np.zeros(len(p[1]))
@@ -123,10 +124,8 @@ elapsed_time = k*n_iterations
 for n in range(len(p[1])):
     x1 = p[0, i]*np.cos(2*np.pi*max_time) - p[1, i]*np.sin(2*np.pi*max_time)
     x2 = p[0, i]*np.sin(2*np.pi*max_time) + p[1, i]*np.cos(2*np.pi*max_time)
-    if initial_A:
-        u = f.exact_solution_A(x1, x2, x0, y0, r0)
-    else:
-        u = f.exact_solution_B(x1, x2, x0, y0, r0)
+    u = f.exact_solution_A(x1, x2, x0, y0, r0)
+
 
     errors[n] = u - U_n[n]  
 
@@ -136,10 +135,8 @@ eh = np.sqrt(errors.T@M@errors)
 
 print(f"Error: {eh}")
 
-
-
-init_cond = 'A' if initial_A else 'B'
-integration = 'Euler' if euler else 'RK4'
+with open(f"plots_for_1-3/errors.txt", "a") as f:
+    f.write("{}, {}, {}, {}\n".format(integration, CFL, max_time, eh))
 
 
 fig = plt.figure(figsize=(8, 6))
@@ -151,7 +148,7 @@ ax.set_zlabel("U")
 ax.set_title(f"Solution after {max_time} seconds, k={k}")
 fig.colorbar(surf, shrink=0.6)
 
-fig.savefig(f"plots_for_1-3/sol-plot_{len(p[1])}_{init_cond}_{integration}")
+fig.savefig(f"plots_for_1-3/sol-plot_{len(p[1])}_{integration}_CFL{CFL}")
 
 fig1, ax1 = plt.subplots(figsize=(8, 6))
 ax1.plot(np.linspace(0, 1, n_iterations), total_mass, label="total mass")
@@ -159,7 +156,7 @@ ax1.set_xlabel("time [s]")
 ax1.set_ylabel("total mass")
 ax1.set_title("Total mass as a function of time")
 
-fig1.savefig(f"plots_for_1-3/mass-plot_{len(p[1])}_{init_cond}_{integration}")
+fig1.savefig(f"plots_for_1-3/mass-plot_{len(p[1])}_{integration}_CFL{CFL}")
 
 
 

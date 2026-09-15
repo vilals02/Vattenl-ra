@@ -100,6 +100,7 @@ total_mass = np.zeros(n_iterations)
 for n in range(n_iterations):
     U_n = f.rk4_step(M_inv, C, U_n, k) 
     total_mass[n] = np.sum(U_n)
+total_mass = total_mass / np.max(total_mass)
 
 
 errors = np.zeros(len(p[1]))
@@ -120,7 +121,8 @@ eh = np.sqrt(errors.T@M@errors)
 
 print(f"Error: {eh}")
 
-
+with open("plots_A/errors.txt", "a") as f:
+    f.write("Error for p = {}: {}\n".format(p.shape[1], eh))
 
 
 fig = plt.figure(figsize=(8, 6))
@@ -132,7 +134,7 @@ ax.set_zlabel("U")
 ax.set_title(f"Solution after {max_time} seconds, k={k}")
 fig.colorbar(surf, shrink=0.6)
 
-fig.savefig(f"plots_A/sol-plot_{len(p[1])}_stable")
+fig.savefig(f"plots_A/sol-plot_{len(p[1])}")
 
 fig1, ax1 = plt.subplots(figsize=(8, 6))
 ax1.plot(np.linspace(0, 1, n_iterations), total_mass, label="total mass")
@@ -141,7 +143,6 @@ ax1.set_ylabel("total mass")
 ax1.set_title("Total mass as a function of time")
 
 fig1.savefig(f"plots_A/mass-plot_{len(p[1])}")
-
 
 
 print("1^T M 1           =", one @ (M @ one))

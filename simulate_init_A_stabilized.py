@@ -100,7 +100,7 @@ total_mass = np.zeros(n_iterations)
 for n in range(n_iterations):
     U_n = f.rk4_step(M_inv, A, U_n, k) # Stabilized
     total_mass[n] = np.sum(U_n)
-
+total_mass = total_mass / np.max(total_mass)
 
 errors = np.zeros(len(p[1]))
 
@@ -120,7 +120,8 @@ eh = np.sqrt(errors.T@M@errors)
 
 print(f"Error: {eh}")
 
-
+with open("plots_As/errors.txt", "a") as f:
+    f.write("Error for p = {}: {}\n".format(p.shape[1], eh))
 
 
 fig = plt.figure(figsize=(8, 6))
