@@ -41,8 +41,8 @@ M = mass_assembler_2d(p, t)
 b = load_assembler_2d(p, t, lambda x, y: 1.0)
 S = stiffness_assembler_2d(p, t)
 
-bx = np.ones(p.shape[1])
-by = 2.0 * np.ones(p.shape[1])
+bx = -2 * np.pi * p[1,:]
+by = 2 * np.pi * p[0,:]
 C = convection_assembler_2d(p, t, bx, by)
 
 A = S + C

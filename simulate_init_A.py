@@ -78,7 +78,7 @@ from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
 
 one = np.ones(p.shape[1])
 
-max_time = 0.2 # seconds
+max_time = 1 # seconds
 r0 = 0.25
 x0 = 0.3
 y0 = 0
@@ -140,7 +140,7 @@ ax1.set_xlabel("time [s]")
 ax1.set_ylabel("total mass")
 ax1.set_title("Total mass as a function of time")
 
-fig1.savefig(f"plots_A/mass-plot_{len(p[1])}_stable")
+fig1.savefig(f"plots_A/mass-plot_{len(p[1])}")
 
 
 
