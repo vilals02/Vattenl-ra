@@ -29,7 +29,7 @@ init_cond = 'A' if initial_A else 'B'
 
 msh = mesh.create_rectangle(
     MPI.COMM_SELF,
-    points=[[-0.5, -0.5], [0.5, 0.5]],
+    points=[[-1, -1], [1, 1]],
     n=[50, 50],
     cell_type=mesh.CellType.triangle,
 )
@@ -51,7 +51,7 @@ C = convection_assembler_2d(p, t, bx, by)
 
 one = np.ones(p.shape[1])
 
-time = 1
+time = 0.2
 
 
 r0 = 0.25
@@ -80,4 +80,4 @@ ax.set_zlabel("U")
 ax.set_title(f"Solution after {time} seconds")
 fig.colorbar(surf, shrink=0.6)
 
-fig.savefig(f"plots_Exact/sol_{init_cond}")
+fig.savefig(f"plots_Exact/short_{init_cond}")
