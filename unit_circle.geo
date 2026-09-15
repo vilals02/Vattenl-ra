@@ -7,7 +7,11 @@
 //
 // Or use make_circle_mesh.py which runs gmsh programmatically.
 
+<<<<<<< Updated upstream
 lc = 0.08;   // characteristic mesh size (reduce for finer mesh)
+=======
+lc = 0.12;   // characteristic mesh size (reduce for finer mesh)
+>>>>>>> Stashed changes
 
 // Centre and four equidistant points on the unit circle
 Point(1) = { 0,  0, 0, lc};   // centre (not a mesh vertex, only for arcs)

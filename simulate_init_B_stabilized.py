@@ -101,7 +101,7 @@ for n in range(n_iterations):
     U_n = f.rk4_step(M_inv, A, U_n, k) # Stabilized
     total_mass[n] = np.sum(U_n)
 
-
+total_mass = total_mass / np.max(total_mass)
 errors = np.zeros(len(p[1]))
 
 elapsed_time = k*n_iterations
@@ -117,6 +117,9 @@ for n in range(len(p[1])):
 #Compute norm of eh
 
 eh = np.sqrt(errors.T@M@errors)
+
+with open("errors_B_stabilized.txt", "a") as f:
+    f.write(f"{len(p[1])} {eh}\n")
 
 print(f"Error: {eh}")
 
