@@ -105,6 +105,42 @@ def create_eps_K_array_NL(p, t, U_n):
 
     return 0.5 * eps_K
 
+def create_eps_K_array_NL_RV(p, t, U_n, U_np, k):
+
+    eps_max = create_eps_K_array_NL(p, t, U_n)
+    eps_K = np.zeros(t.shape[1])
+    dut = (U_n - U_np) / k
+    f1p, f2p = fp(U_n)
+    x, y = p[0, :], p[1, :]
+
+    U_mean = np.mean(U_n)
+    norm_U = np.max(np.abs(U_n - U_mean))
+    norm_U = max(norm_U, 1e-12)   # guard divide-by-zero on a flat field
+
+    for K in range(t.shape[1]):
+        loc2glb = t[:, K]
+        xloc, yloc = x[loc2glb], y[loc2glb]
+        _, dx, dy = hat_gradients(xloc, yloc)
+
+        dudx = U_n[loc2glb] @ dx
+        dudy = U_n[loc2glb] @ dy
+        f1p_bar, f2p_bar = np.mean(f1p[loc2glb]), np.mean(f2p[loc2glb])
+        div_f = f1p_bar*dudx + f2p_bar*dudy
+
+        Res = div_f + dut[loc2glb]
+        inf_norm_res = np.max(np.abs(Res))
+
+        p1, p2, p3 = p[:, t[0,K]], p[:, t[1,K]], p[:, t[2,K]]
+        h_K = max(np.linalg.norm(p1-p2), np.linalg.norm(p2-p3), np.linalg.norm(p1-p3))
+
+        eps_rv = h_K**2 * inf_norm_res / norm_U
+        eps_K[K] = min(eps_rv, eps_max[K])   # cap against first-order viscosity
+
+    return eps_K
+
+
+
+
 
 
 def _assemble_sparse(npnt, t, local_matrix):
@@ -157,6 +193,28 @@ def _assemble_stiffness_sparse_NL(npnt, p, t, local_matrix, U_n):
     vals = []
 
     eps = create_eps_K_array_NL(p, t, U_n)
+
+    for K in range(nt):
+        loc2glb = t[:, K]
+        AK = eps[K] * local_matrix(K, loc2glb)
+
+        for i in range(3):
+            for j in range(3):
+                rows.append(loc2glb[i])
+                cols.append(loc2glb[j])
+                vals.append(AK[i, j])
+
+    return coo_matrix((vals, (rows, cols)),
+                      shape=(npnt, npnt)).tocsr()
+
+def _assemble_stiffness_sparse_NL_RV(npnt, p, t, local_matrix, U_n, U_np, k):
+    nt = t.shape[1] # Iterate through triangles 
+
+    rows = []
+    cols = []
+    vals = []
+
+    eps = create_eps_K_array_NL_RV(p, t, U_n, U_np, k)
 
     for K in range(nt):
         loc2glb = t[:, K]
@@ -268,6 +326,27 @@ def stiffness_assembler_2d_NL(p, t, U_n):
 
     return _assemble_stiffness_sparse_NL(npnt, p, t, local_matrix, U_n)
 
+def stiffness_assembler_2d_NL_RV(p, t, U_n, U_np, k):
+    """
+    Assemble A_ij = int a grad(phi_j).grad(phi_i) dx.
+
+    The coefficient a is evaluated at the triangle centroid,
+    as in Larson-Bengzon.
+    """
+    npnt = p.shape[1]
+
+    def local_matrix(K, loc2glb):
+        x = p[0, loc2glb]
+        y = p[1, loc2glb]
+
+        area, b, c = hat_gradients(x, y)
+        xc = np.mean(x)
+        yc = np.mean(y)
+        # abar = float(a(xc, yc)) # Larson-Bengzon
+
+        return area * (np.outer(b, b) + np.outer(c, c))
+
+    return _assemble_stiffness_sparse_NL_RV(npnt, p, t, local_matrix, U_n, U_np, k)
 
 def convection_assembler_2d(p, t, bx, by):
     """
