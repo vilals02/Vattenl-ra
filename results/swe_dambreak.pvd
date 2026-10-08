@@ -2,8 +2,6 @@
 <VTKFile type="Collection" version="1.0">
   <Collection>
     <DataSet timestep="0" part="0" file="swe_dambreak000000.pvtu" />
-<<<<<<< HEAD
-=======
     <DataSet timestep="0.02500000000001" part="0" file="swe_dambreak000001.pvtu" />
     <DataSet timestep="0.050000000000010002" part="0" file="swe_dambreak000002.pvtu" />
     <DataSet timestep="0.075000000000010017" part="0" file="swe_dambreak000003.pvtu" />
@@ -24,6 +22,5 @@
     <DataSet timestep="0.45000000000001011" part="0" file="swe_dambreak000018.pvtu" />
     <DataSet timestep="0.47500000000001014" part="0" file="swe_dambreak000019.pvtu" />
     <DataSet timestep="0.5" part="0" file="swe_dambreak000020.pvtu" />
->>>>>>> 3b46cd1 (helo)
   </Collection>
 </VTKFile>

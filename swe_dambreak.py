@@ -62,8 +62,8 @@ arr = U_h.x.array.reshape(-1, 4)
 L   = x[:, 0] < 0.5                     # left half: deep water
 arr[L,  0] = 1.0                           # rho = 1  (left)
 arr[~L, 0] = 0.125                         # rho = 0.125 (right)
-arr[L, 3] = 1.0
-arr[~L, 3] = 0.1
+arr[L, 3] = 2.5
+arr[~L, 3] = 0.25
 # hu = hv = 0 everywhere initially
 U_h.x.scatter_forward()
 
