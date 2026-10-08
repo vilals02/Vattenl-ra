@@ -96,4 +96,33 @@ def initial_profile_NL(x, N):
         
     return init_cond
 
+def conservative_to_primitive(U): 
+    gamma = 1.4
+    p = (gamma - 1) * (U[:,3] - 0.5 * (U[:,1]**2 + U[:,2]**2) / U[:,0])    
+    Up = np.copy(U)
+    Up[:,0] = U[:,0]
+    Up[:,1] = U[:,1] / U[:,0]
+    Up[:,2] = U[:,2] / U[:,0]
+    Up[:,3] = p
+    return Up
+
+def compute_sound_speed(p, rho):
+    gamma = 1.4
+    return np.sqrt(gamma * p / rho)
+
+def compute_eps_K(p_n, rho_n, u_n, v_n, C, x, cells):
+    """p_n, rho_n, u_n, v_n: (n_nodes,); x: (n_nodes,3); cells: (ncells,3)."""
+    eps_K = np.zeros(cells.shape[0])
+    for K in range(cells.shape[0]):
+        i1, i2, i3 = cells[K]
+        p1, p2, p3 = x[i1, :2], x[i2, :2], x[i3, :2]
+        h_K = max(np.linalg.norm(p1 - p2),
+                  np.linalg.norm(p2 - p3),
+                  np.linalg.norm(p1 - p3))
+        lam = 0.0
+        for i in (i1, i2, i3):
+            c = compute_sound_speed(max(p_n[i], 1e-10), max(rho_n[i], 1e-10)) # No div by zero 
+            lam = max(lam, np.sqrt(u_n[i]**2 + v_n[i]**2) + c)
+        eps_K[K] = C * h_K * lam
+    return eps_K
 
