@@ -72,14 +72,10 @@ hw      = mesh.locate_entities_boundary(msh, fdim,
               lambda x: np.isclose(x[1], 0.0) | np.isclose(x[1], 0.2))
 dofs_hv = fem.locate_dofs_topological(V.sub(2), fdim, hw)
 
-# hu = 0 on left/right walls  (no normal flux through x = 0, 1)
-vw      = mesh.locate_entities_boundary(msh, fdim,
-              lambda x: np.isclose(x[0], 0.0) | np.isclose(x[0], 1.0))
-dofs_hu = fem.locate_dofs_topological(V.sub(1), fdim, vw)
+# hu is free on the x boundary
 
 def apply_slip(arr):
     arr[dofs_hv] = 0.0
-    arr[dofs_hu] = 0.0
 
 apply_slip(U_h.x.array)
 
@@ -108,9 +104,9 @@ def compute_rhs(R_form):
 def dt_cfl():
     """CFL time step: dt = CFL · min_K(h_K / λ_K),  λ_K = |u|+|v|+√(gh)."""
     U   = U_h.x.array.reshape(-1, 4)[verts].mean(axis=1)   # (ncel, 3)
-    h_c = np.maximum(U[:, 0], 1e-14)
-    u_c = U[:, 1] / h_c;  v_c = U[:, 2] / h_c
-    lam = np.abs(u_c) + np.abs(v_c) + np.sqrt(g * h_c)
+    rho = np.maximum(U[:, 0], 1e-14)
+    u_c = U[:, 1] / rho;  v_c = U[:, 2] / rho
+    lam = np.sqrt(u_c**2 + v_c**2) + funky.compute_sound_speed(rho, U[:,3])
     return float(CFL * np.min(h_K / (lam + 1e-30)))
 
 def ssp_rk3(dt, R_form):
