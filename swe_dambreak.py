@@ -28,6 +28,7 @@ from dolfinx.fem import form
 from ufl import inner, dx, TestFunction
 from petsc4py import PETSc
 import funcs as funky
+import matplotlib.pyplot as plt
 
 # ── parameters ───────────────────────────────────────────────────────────────
 g      = 9.81    # gravity
@@ -106,7 +107,7 @@ def dt_cfl():
     U   = U_h.x.array.reshape(-1, 4)[verts].mean(axis=1)   # (ncel, 3)
     rho = np.maximum(U[:, 0], 1e-14)
     u_c = U[:, 1] / rho;  v_c = U[:, 2] / rho
-    lam = np.sqrt(u_c**2 + v_c**2) + funky.compute_sound_speed(rho, U[:,3])
+    lam = np.sqrt(u_c**2 + v_c**2) + funky.compute_sound_speed(U[:,3] ,rho)
     return float(CFL * np.min(h_K / (lam + 1e-30)))
 
 def ssp_rk3(dt, R_form):
@@ -136,7 +137,7 @@ def update_eps():
     eps_f.x.scatter_forward()
 
 # ── UFL residual (compiled once before the time loop) ────────────────────────
-C = 1 #parameter
+C = 0.1 #parameter
 # Up = funky.conservative_to_primitive(U_h.x.array.reshape(-1, 4))
 psi   = TestFunction(V)
 
@@ -163,6 +164,20 @@ t             = 0.0
 snap_interval = T_END / N_SNAP
 next_snap     = snap_interval
 
+eps   = 1e-3
+mask  = np.abs(x[:, 1] - 0.1) < eps
+order = np.argsort(x[mask, 0])
+xs    = x[mask, 0][order]
+
+snap_count = 0
+
+xgrid = np.linspace(0, 1, np.shape(U_h.x.array.reshape(-1, 4))[0])
+
+r, u, v, p = primitive()
+plt.xlabel("x")
+plt.ylabel("u")
+plt.plot(xs, u[mask][order], "-o", ms=1, label=f"t = {t:.3f}")
+
 vtk.write_function(U_h, t)
 print(f"{'step':>6}  {'t':>8}  {'dt':>10}  {'min h':>10}")
 step = 0
@@ -174,10 +189,20 @@ while t < T_END - 1e-12:
     t    += dt
     step += 1
     if t >= next_snap - 1e-12:
+        snap_count += 1
         vtk.write_function(U_h, t)
         h_arr = U_h.x.array.reshape(-1, 4)[:, 0]
         print(f"{step:6d}  {t:8.4f}  {dt:10.2e}  {h_arr.min():10.4f}")
         next_snap += snap_interval
+        if snap_count % 4 == 0:
+                r, u, v, p = primitive()
+                plt.xlabel("x")
+                plt.ylabel("u")
+                plt.plot(xs, u[mask][order], "-o", ms=1, label=f"t = {t:.3f}")
 
 vtk.close()
 print("Done — open swe_dambreak.pvd in ParaView.")
+plt.legend()
+plt.title(r"$u(x, y)$ at $y = 0.1$")
+plt.savefig("Yadyi")
+
