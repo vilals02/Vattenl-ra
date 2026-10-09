@@ -31,9 +31,8 @@ import funcs as funky
 
 # ── parameters ───────────────────────────────────────────────────────────────
 g      = 9.81    # gravity
-EPS    = 5e-3    # constant artificial viscosity (~0.5 * h_min * wave_speed)
 CFL    = 0.4     # CFL number
-T_END  = 0.5     # final time
+T_END  = 0.2   # final time
 N_SNAP = 20      # snapshots written to disk
 
 # ── mesh ─────────────────────────────────────────────────────────────────────
