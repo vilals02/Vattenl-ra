@@ -1,51 +1,83 @@
-import matplotlib.pyplot as plt
+import os
+import csv
+
 import numpy as np
+import matplotlib.pyplot as plt
 
-def plotfig(data, data_stabilized, init_cond):
-  mesh_size = [0.05, 0.08, 0.10, 0.12]
-  plt.loglog(mesh_size, data, label="GFEM")
-  if data_stabilized is not None:
-    plt.loglog(mesh_size, data_stabilized, label="Stabilized GFEM")
-  plt.xlabel(f"Characteristic mesh size [log(h)]")
-  plt.ylabel(r"$e_h$")
-  plt.title(f"Initial condition {init_cond}")
-  plt.ylim(10**-4, 1)
-  plt.legend()
-  plt.savefig(f"errorplots/error_{init_cond}_vs_as.png")
-  plt.close()
+# ── Where the CSVs written by the run scripts live ────────────────────────────
+CSV_FILES = {
+    "A":  {"GFEM": "plots_A/errors.csv",  "Stabilized GFEM": "plots_As/errors.csv"},
+    "B":  {"GFEM": "plots_B/errors.csv",  "Stabilized GFEM": "plots_Bs/errors.csv"},
+}
 
-<<<<<<< Updated upstream
-errorsA = [0.341, 0.343, 0.345, 0.348]
-errorsB = []
-errorsAS = [0.130, 0.133, 0.139, 0.158]
-errorsBS = []
-=======
-errorsA = [0.348, 0.345, 0.342, 0.340]
-errorsB = [0.41127981559610904, 0.41038598919932645, 0.42108706484562436, 0.4289585744730342]
-errorsAS = [0.000215, 0.000972, 0.00175, 0.00242]
-errorsBS = [0.12192088479813963, 0.12404406771107389, 0.13378796782120994, 0.1537117360597822]
->>>>>>> Stashed changes
+# Nominal mesh sizes, keyed by node count (from your notes). If a node count is
+# not listed here, the h column from the CSV is used instead.
+NOMINAL_H = {
+    1594: 0.05,
+    649:  0.08,
+    423:  0.10,
+    331:  0.12,
+}
+
+OUT_DIR = "errorplots"
+os.makedirs(OUT_DIR, exist_ok=True)
 
 
-#p            #mz
-#1594        #0.05  
-#649         #0.08
-#423         #0.10
-#331         #0.12
+def load_csv(path):
+    """Return (h, error) arrays sorted by h. Repeated runs on the same mesh
+    (same node count) keep only the last one. Returns None if no file/rows."""
+    if not os.path.exists(path):
+        return None
 
-<<<<<<< Updated upstream
-plotfig(errorsA, errorsAS, "A")
-#plotfig(errorsB, errorsBS, "B")
-=======
-mesh_size = [0.05, 0.08, 0.10, 0.12]
-plt.loglog(mesh_size, errorsB, label="GFEM")
-plt.xlabel(f"Characteristic mesh size [log(h)]")
-plt.ylabel(r"$e_h$")
-plt.title(f"Initial condition B")
-plt.ylim(10**-4, 1)
-plt.legend()
-plt.savefig(f"errorplots/error_B_solo.png")
-plt.close()
+    latest = {}  # n_nodes -> (h, error)
+    with open(path, newline="") as fh:
+        for row in csv.DictReader(fh):
+            n_nodes = int(row["n_nodes"])
+            h = NOMINAL_H.get(n_nodes, float(row["h"]))
+            latest[n_nodes] = (h, float(row["L2_error"]))
 
-plotfig(errorsB, errorsBS, "B")
->>>>>>> Stashed changes
+    if not latest:
+        return None
+
+    pairs = sorted(latest.values())
+    h = np.array([a for a, _ in pairs])
+    err = np.array([b for _, b in pairs])
+    return h, err
+
+
+def plotfig(series, init_cond):
+    """series: dict label -> (h, err). Saves errorplots/error_<cond>_vs_as.png"""
+    fig, ax = plt.subplots(figsize=(7, 5))
+
+    for label, (h, err) in series.items():
+        ax.loglog(h, err, "o-", label=label)
+        if len(h) >= 2:
+            rate = np.polyfit(np.log(h), np.log(err), 1)[0]
+            print(f"  {init_cond} / {label}: observed order ~ {rate:.2f}")
+
+    ax.set_xlabel("Characteristic mesh size h")
+    ax.set_ylabel(r"$e_h$")
+    ax.set_title(f"Initial condition {init_cond}")
+    ax.set_ylim(1e-4, 1)
+    ax.legend()
+    ax.grid(True, which="both", alpha=0.3)
+
+    out = os.path.join(OUT_DIR, f"error_{init_cond}_vs_as.png")
+    fig.savefig(out, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    print(f"  saved {out}")
+
+
+for cond, files in CSV_FILES.items():
+    series = {}
+    for label, path in files.items():
+        data = load_csv(path)
+        if data is None:
+            print(f"[{cond}] no data for '{label}' ({path}), skipping")
+        else:
+            series[label] = data
+
+    if series:
+        plotfig(series, cond)
+    else:
+        print(f"[{cond}] nothing to plot")
