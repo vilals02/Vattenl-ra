@@ -1,0 +1,2 @@
+mesh_file,n_nodes,n_triangles,integration,CFL,h,k,n_steps,max_time,T,L2_error
+unit_circle.xdmf,649,1216,RK4,36,8.000000e-02,4.583662e-01,1,0.2,0.458366,1.797668e+02
